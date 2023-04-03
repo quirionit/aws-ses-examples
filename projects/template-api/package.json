@@ -1,0 +1,31 @@
+{
+  "name": "app",
+  "version": "0.1.0",
+  "bin": {
+    "app": "bin/app.js"
+  },
+  "scripts": {
+    "build": "../../app/node_modules/.bin/tsc",
+    "watch": "../../app/node_modules/.bin/tsc -w",
+    "test": "../../app/node_modules/.bin/jest",
+    "cdk": "../../app/node_modules/.bin/cdk"
+  },
+  "devDependencies": {
+    "@types/jest": "^27.5.2",
+    "@types/node": "10.17.27",
+    "@types/prettier": "2.6.0",
+    "aws-cdk": "2.44.0",
+    "jest": "^27.5.1",
+    "ts-jest": "^27.1.4",
+    "ts-node": "^10.9.1",
+    "typescript": "~3.9.7"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "2.44.0",
+    "@aws-cdk/aws-apigatewayv2-alpha": "2.20.0-alpha.0",
+    "@aws-cdk/aws-apigatewayv2-integrations-alpha": "2.20.0-alpha.0",
+    "@aws-cdk/aws-lambda-go-alpha": "2.20.0-alpha.0",
+    "constructs": "^10.0.0",
+    "source-map-support": "^0.5.21"
+  }
+}

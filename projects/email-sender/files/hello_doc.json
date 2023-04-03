@@ -1,0 +1,8 @@
+{
+  "Template":{
+    "TemplateName":"HelloDocument",
+    "SubjectPart":"Your first attachment!",
+    "HtmlPart": "<h1>Hello {{name}}, see the attached file.</h1>",
+    "TextPart": "Hello {{name}}, see the attached file."
+  }
+}

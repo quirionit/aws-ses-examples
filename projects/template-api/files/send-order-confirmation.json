@@ -1,0 +1,9 @@
+{
+  "Source":"your verified email address",
+  "Template": "order-confirmation",
+  "Destination": {
+    "ToAddresses": [ "your verified email address"
+    ]
+  },
+  "TemplateData": "{\"FIRSTNAME\":\"Jane\",\"LASTNAME\":\"Doe\"}"
+}
