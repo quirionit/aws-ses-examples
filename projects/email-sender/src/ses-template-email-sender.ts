@@ -4,10 +4,13 @@ import { SfnStateMachine } from 'aws-cdk-lib/aws-events-targets';
 import { PolicyStatement, Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
 import { Architecture } from 'aws-cdk-lib/aws-lambda';
 import { Queue } from 'aws-cdk-lib/aws-sqs';
-import { Choice, Condition, JsonPath, StateMachine } from 'aws-cdk-lib/aws-stepfunctions';
+import { Choice, Condition, JsonPath, StateMachine, StateMachineType } from 'aws-cdk-lib/aws-stepfunctions';
 import { CallAwsService, LambdaInvoke } from 'aws-cdk-lib/aws-stepfunctions-tasks';
 import { Construct } from 'constructs';
 import { EmailSenderConfiguration } from './email-sender-configuration';
+import { LogGroup } from 'aws-cdk-lib/aws-logs';
+import { RemovalPolicy } from 'aws-cdk-lib';
+import { LogLevel } from 'aws-cdk-lib/aws-stepfunctions';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const path = require('path');
@@ -44,29 +47,45 @@ export class SesTemplateEmailSender extends Construct {
     /*--------Step function tasks--------*/
     // Create a ses sendTemplatedEmail step function task
     const sendEmail = new CallAwsService(this, 'Send email', {
-      service: 'ses',
-      action: 'sendTemplatedEmail',
+      service: 'sesv2',
+      action: 'sendEmail',
       parameters: {
+        Content: {
+          Template: {
+            TemplateData: JsonPath.objectAt('$.parameter'),
+            TemplateName: JsonPath.objectAt('$.template')
+          },
+        },
         Destination: {
           ToAddresses: JsonPath.array(JsonPath.stringAt('$.recipient')),
         },
-        Source: JsonPath.stringAt('$.sender'),
-        Template: JsonPath.objectAt('$.template'),
-        TemplateData: JsonPath.objectAt('$.parameter'),
+        FromEmailAddress: JsonPath.stringAt('$.sender'),
       },
       iamResources: ['*'],
+      additionalIamStatements: [
+        new PolicyStatement({
+          resources: ['*'],
+          actions: ['ses:SendTemplatedEmail'],
+        }),
+      ],
     });
 
     // Create a ses testRenderTemplate step function task
     const renderEmail = new CallAwsService(this, 'Render email', {
-      service: 'ses',
-      action: 'testRenderTemplate',
+      service: 'sesv2',
+      action: 'testRenderEmailTemplate',
       parameters: {
         TemplateName: JsonPath.objectAt('$.template'),
         TemplateData: JsonPath.objectAt('$.parameter'),
       },
       iamResources: ['*'],
       resultPath: '$.raw',
+      additionalIamStatements: [
+        new PolicyStatement({
+          resources: ['*'],
+          actions: ['ses:TestRenderEmailTemplate'],
+        }),
+      ],
     });
 
     // Create a step function task that invokes the lambda function
@@ -83,8 +102,20 @@ export class SesTemplateEmailSender extends Construct {
     // Create a step function state machine using the defined step function workflow
     const sfn = new StateMachine(scope, 'Send email state machine', {
       stateMachineName: `${id}-EmailSender`,
+      stateMachineType: StateMachineType.EXPRESS,
+      tracingEnabled: true,
+      logs: {
+        destination: new LogGroup(this, 'EmailWorkflowLogGroup', {
+          logGroupName: 'EmailWorkflowLogGroup',
+          removalPolicy: RemovalPolicy.DESTROY,
+        }),
+        level: LogLevel.ALL,
+      },
       definition,
     });
+
+    // grant the step function state machine the permissions to 
+
 
     /*--------Step function trigger--------*/
     // Create a new EventBridge rule for the provided EventBus
